@@ -1,18 +1,19 @@
 """
 quadcopter.__main__
 -------------------
-Command–line demo and quick‑experiment entry point.
+Command‑line demo and quick‑experiment entry point.
 
-Install the package (editable or wheel) and run:
-
-    python -m quadcopter --plot                     # default gains
-    python -m quadcopter --kp 6 --kd 4 --plot       # custom PID
-    quadcopter-demo --duration 8 --csv flight.csv   # same via console‑script
+Examples
+--------
+python -m quadcopter --plot                     # default gains
+python -m quadcopter --kp 6 --kd 4 --plot       # custom PID
+quadcopter-demo --duration 8 --csv flight.csv   # same via console‑script
 """
 
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +21,11 @@ import numpy as np
 from .controllers import AltitudePID
 from .plotting import plot_trajectory
 from .simulation import simulate
+
+# ----------------------------------------------------------------------
+# Module‑level logger
+# ----------------------------------------------------------------------
+log = logging.getLogger("quadcopter.demo")
 
 
 def main(argv: list[str] | None = None) -> None:  # noqa: D401
@@ -47,7 +53,13 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
     # output / visualisation
     p.add_argument("--plot", action="store_true", help="show matplotlib figure")
     p.add_argument("--csv", type=Path, help="save (t, state, control) to CSV")
+    p.add_argument("--quiet", action="store_true", help="suppress INFO output")
     args = p.parse_args(argv)
+
+    # ------------------------------------------------------------------ log level
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    if args.quiet:
+        log.setLevel(logging.WARNING)
 
     # ------------------------------------------------------------ controller
     ctrl = AltitudePID(setpoint=1.0, kp=args.kp, ki=args.ki, kd=args.kd)
@@ -65,7 +77,7 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
 
     # ------------------------------------------------------------ reporting
     for k, v in ctrl.step_metrics(t, states[:, 2]).items():
-        print(f"{k:20s}: {v:.3f}")
+        log.info("%-20s: %.3f", k, v)
 
     if args.csv:
         out = np.column_stack([t, states, controls])
@@ -77,7 +89,7 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
             "u1,u2,u3,u4"
         )
         np.savetxt(args.csv, out, delimiter=",", header=header, comments="")
-        print(f"Saved data to {args.csv}")
+        log.info("Saved data to %s", args.csv)
 
     if args.plot:
         plot_trajectory(t, states, controls)

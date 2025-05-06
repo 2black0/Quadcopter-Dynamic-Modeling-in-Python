@@ -1,2 +1,0 @@
-[console_scripts]
-quadcopter-demo = quadcopter.__main__:main
