@@ -28,7 +28,6 @@ __license__: str = "MIT"
 # ---------------------------------------------------------------------
 from .dynamics import Params, QuadState, derivative          # physics core
 from .simulation import simulate, HoverController            # integrators
-from .controllers import AltitudePID                         # basic control
 from .plotting import plot_trajectory, animate_trajectory    # visualisation
 
 __all__ = [
@@ -36,10 +35,11 @@ __all__ = [
     "Params", "QuadState", "derivative",
     # simulation
     "simulate", "HoverController",
-    # control
-    "AltitudePID",
     # visualisation
     "plot_trajectory", "animate_trajectory",
     # meta
     "__version__",
 ]
+
+from .env import QuadcopterEnv   # add to earlier export block
+__all__.append("QuadcopterEnv")

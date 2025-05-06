@@ -97,6 +97,15 @@ def simulate(
     # we’ll need this for either integrator
     t_eval = np.arange(0.0, duration + dt, dt)
 
+    # 1. accept callables without 'update' -------------------------------
+    if callable(controller) and not hasattr(controller, "update"):
+        class _FnController:              # minimal shim
+            def __init__(self, fn): self._fn = fn
+            def update(self, t, state):   # noqa: D401
+                return self._fn(t, state)
+        controller = _FnController(controller)  # type: ignore[assignment]
+
+
     # -----------------------------------------------------------------
     # 1.  RHS wrapper: dynamics + controller
     # -----------------------------------------------------------------
