@@ -162,7 +162,8 @@ def derivative(
     )
 
     # Rotation ----------------------------------------------------------
-    ang_acc = np.linalg.inv(p.I) @ (
+    ang_acc = np.linalg.solve(
+        p.I,
         tau - np.cross(state.ang_vel, p.I @ state.ang_vel)
     )
 

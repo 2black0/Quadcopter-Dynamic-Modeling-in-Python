@@ -1,0 +1,16 @@
+LICENSE
+README.md
+pyproject.toml
+quadcopter/__init__.py
+quadcopter/dynamics.py
+quadcopter/plotting.py
+quadcopter/simulation.py
+quadcopter_dynamics.egg-info/PKG-INFO
+quadcopter_dynamics.egg-info/SOURCES.txt
+quadcopter_dynamics.egg-info/dependency_links.txt
+quadcopter_dynamics.egg-info/requires.txt
+quadcopter_dynamics.egg-info/top_level.txt
+test/test_dynamics.py
+test/test_pid.py
+test/test_plotting.py
+test/test_simulation.py

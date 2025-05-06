@@ -63,42 +63,24 @@ class HoverController(BaseController):
 # Simulation routine
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------
 def simulate(
     duration: float,
     dt: float,
     controller: BaseController,
     initial_state: QuadState | None = None,
     params: Params = Params(),
-    rtol: float = 1e-8,
-    atol: float = 1e-10,
+    *,
+    method: str = "rk45",
+    rtol: float = 1e-6,
+    atol: float = 1e-8,
+    max_step: float | None = None,
 ) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
-    """Run a simulation.
+    """Integrate the quadcopter dynamics with either adaptive RK45 or fixed‑step RK4."""
 
-    Parameters
-    ----------
-    duration : float
-        Final time [s].
-    dt : float
-        Output sampling interval [s].  (Integrator step size is adaptive.)
-    controller : BaseController
-        Object with an *update(t, state) -> control* method.
-    initial_state : QuadState, optional
-        If omitted, starts at origin, zero velocity/attitude.
-    params : Params, optional
-        Physical parameters (must match controller if controller relies on them).
-    rtol, atol : float, optional
-        Tolerances forwarded to `scipy.integrate.solve_ivp`.
-
-    Returns
-    -------
-    t : (N,) ndarray
-        Time stamps.
-    traj : (N, 13) ndarray
-        State history (packed vectors).
-    ctrl : (N, 4) ndarray
-        Control history (motor speeds).
-    """
-
+    # -----------------------------------------------------------------
+    # 0.  Default initial state (pos=0, level, at rest)
+    # -----------------------------------------------------------------
     if initial_state is None:
         initial_state = QuadState(
             pos=np.zeros(3),
@@ -107,30 +89,66 @@ def simulate(
             ang_vel=np.zeros(3),
         )
 
-    t_eval = np.arange(0.0, duration + dt, dt)
-    control_log = np.empty((t_eval.size, 4), dtype=np.float64)
+    state_vec0 = initial_state.as_vector()
+    state_dim  = state_vec0.size
 
-    # Wrap derivative to include the controller
+    # we’ll need this for either integrator
+    t_eval = np.arange(0.0, duration + dt, dt)
+
+    # -----------------------------------------------------------------
+    # 1.  RHS wrapper: dynamics + controller
+    # -----------------------------------------------------------------
     def rhs(t: float, y: NDArray[np.float64]) -> NDArray[np.float64]:
-        state = QuadState.from_vector(y)
-        u = controller.update(t, state)
+        s = QuadState.from_vector(y)
+        u = controller.update(t, s)
         return derivative(t, y, u, params)
 
-    # Integrate ---------------------------------------------------------
-    sol = solve_ivp(
-        rhs,
-        t_span=(0.0, duration),
-        y0=initial_state.as_vector(),
-        t_eval=t_eval,
-        rtol=rtol,
-        atol=atol,
-    )
+    # -----------------------------------------------------------------
+    # 2.  Choose integration method
+    # -----------------------------------------------------------------
+    if method.lower() == "rk4":
+        n_steps = int(np.ceil(duration / dt))
+        t = np.linspace(0.0, duration, n_steps + 1)
+        y = np.empty((n_steps + 1, state_dim))
+        u_log = np.empty((n_steps + 1, 4))
+        y[0] = state_vec0
 
-    # Build control log using computed states to avoid drift ------------
-    for i, (ti, yi) in enumerate(zip(sol.t, sol.y.T)):
-        control_log[i] = controller.update(ti, QuadState.from_vector(yi))
+        for i in range(n_steps):
+            s_i = QuadState.from_vector(y[i])
+            u   = controller.update(t[i], s_i)
+            k1 = derivative(t[i],           y[i],               u, params)
+            k2 = derivative(t[i] + dt/2.0,  y[i] + k1*dt/2.0,   u, params)
+            k3 = derivative(t[i] + dt/2.0,  y[i] + k2*dt/2.0,   u, params)
+            k4 = derivative(t[i] + dt,      y[i] + k3*dt,       u, params)
+            y[i + 1] = y[i] + dt/6.0 * (k1 + 2*k2 + 2*k3 + k4)
+            u_log[i] = u
 
-    return sol.t, sol.y.T, control_log
+        u_log[-1] = u_log[-2]          # pad final control
+        return t, y, u_log
+
+    elif method.lower() == "rk45":
+        u_log = np.empty((t_eval.size, 4))
+
+        sol = solve_ivp(
+            rhs,
+            t_span=(0.0, duration),
+            y0=state_vec0,
+            t_eval=t_eval,
+            rtol=rtol,
+            atol=atol,
+            max_step=max_step,
+        )
+
+        # Build control log so plotting has u[k] to match t[k]
+        for i, (ti, yi) in enumerate(zip(sol.t, sol.y.T)):
+            u_log[i] = controller.update(ti, QuadState.from_vector(yi))
+
+        return sol.t, sol.y.T, u_log
+
+    else:
+        raise ValueError(f"Unknown integration method '{method}'. "
+                         "Choose 'rk45' or 'rk4'.")
+
 
 
 # ---------------------------------------------------------------------------
