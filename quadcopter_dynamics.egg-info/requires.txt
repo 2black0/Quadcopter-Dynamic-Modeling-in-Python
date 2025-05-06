@@ -1,9 +1,0 @@
-numpy>=1.25
-scipy>=1.11
-matplotlib>=3.8
-pytest>=8.2
-
-[dev]
-pytest
-pytest-cov
-black
