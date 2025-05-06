@@ -97,14 +97,23 @@ def simulate(
     # we’ll need this for either integrator
     t_eval = np.arange(0.0, duration + dt, dt)
 
-    # 1. accept callables without 'update' -------------------------------
-    if callable(controller) and not hasattr(controller, "update"):
-        class _FnController:              # minimal shim
-            def __init__(self, fn): self._fn = fn
-            def update(self, t, state):   # noqa: D401
-                return self._fn(t, state)
-        controller = _FnController(controller)  # type: ignore[assignment]
+    # 1. accept callables without '.update' ---------------------------------
+    from typing import Protocol
 
+    class _CallableController(Protocol):
+        def __call__(self, t: float, state: QuadState) -> NDArray[np.float64]: ...
+
+    if callable(controller) and not hasattr(controller, "update"):
+        class _FnController(BaseController):
+            """Wrap a plain function (t, state) -> motor speeds to look like a controller."""
+
+            def __init__(self, fn: _CallableController) -> None:
+                self._fn = fn
+
+            def update(self, t: float, state: QuadState) -> NDArray[np.float64]:
+                return self._fn(t, state)
+
+        controller = _FnController(controller)  # now typed as BaseController
 
     # -----------------------------------------------------------------
     # 1.  RHS wrapper: dynamics + controller
