@@ -51,7 +51,7 @@ class HoverController(BaseController):
 
     params: Params = Params()
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:      # explicit return type
         self._w_hover = np.sqrt(self.params.m * self.params.g / (4 * self.params.b))
         self.command = np.full(4, self._w_hover, dtype=np.float64)
 
@@ -64,6 +64,8 @@ class HoverController(BaseController):
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------
+from numpy.typing import NDArray
+
 def simulate(
     duration: float,
     dt: float,
@@ -75,7 +77,7 @@ def simulate(
     rtol: float = 1e-6,
     atol: float = 1e-8,
     max_step: float | None = None,
-) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
     """Integrate the quadcopter dynamics with either adaptive RK45 or fixed‑step RK4."""
 
     # -----------------------------------------------------------------
@@ -129,14 +131,16 @@ def simulate(
     elif method.lower() == "rk45":
         u_log = np.empty((t_eval.size, 4))
 
+        ivp_kwargs = dict(rtol=rtol, atol=atol)
+        if max_step is not None:
+            ivp_kwargs["max_step"] = max_step
+
         sol = solve_ivp(
             rhs,
             t_span=(0.0, duration),
             y0=state_vec0,
             t_eval=t_eval,
-            rtol=rtol,
-            atol=atol,
-            max_step=max_step,
+            **ivp_kwargs,
         )
 
         # Build control log so plotting has u[k] to match t[k]

@@ -73,7 +73,7 @@ class AltitudePID(BaseController):
     # -------------------------------------------------------------------
 
     def update(self, t: float, state: QuadState) -> NDArray[np.float64]:
-        z = state.pos[2]
+        z: float = float(state.pos[2])
         err = self.setpoint - z
 
         # dt for integral and derivative terms --------------------------

@@ -12,7 +12,7 @@ animate_trajectory(t, states, *, fps=30, save_path=None)
 """
 
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -72,9 +72,9 @@ def plot_trajectory(
     ax3d.plot(pos[:, 0], pos[:, 1], pos[:, 2], lw=2)
     ax3d.set_xlabel("x [m]")
     ax3d.set_ylabel("y [m]")
-    ax3d.set_zlabel("z [m]")
+    ax3d.set_zlabel("z [m]")        # type: ignore[attr-defined]
     ax3d.set_title("Trajectory (world frame)")
-    ax3d.view_init(elev=20, azim=135)
+    ax3d.view_init(elev=20, azim=135)  # type: ignore[attr-defined]
     ax3d.autoscale(enable=True, axis="both", tight=True)
 
     # position components ----------------------------------------------
@@ -144,36 +144,36 @@ def animate_trajectory(
     fig = plt.figure(figsize=(6, 5))
     ax = fig.add_subplot(111, projection="3d")
 
-    def _axis_limits(arr, pad=0.1):
+    def _axis_limits(arr: "NDArray[np.float64]", pad: float = 0.1) -> Tuple[float, float]:
         lo, hi = arr.min(), arr.max()
-        if np.isclose(lo, hi):            # flat trajectory → expand
+        if np.isclose(lo, hi):
             lo -= pad
             hi += pad
         return lo, hi
 
     ax.set_xlim(*_axis_limits(pos[:, 0]))
     ax.set_ylim(*_axis_limits(pos[:, 1]))
-    ax.set_zlim(*_axis_limits(pos[:, 2]))
+    ax.set_zlim(*_axis_limits(pos[:, 2]))  # type: ignore[attr-defined]
 
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")
-    ax.set_zlabel("z [m]")
+    ax.set_zlabel("z [m]")          # type: ignore[attr-defined]
 
     (traj_line,) = ax.plot([], [], [], lw=2)
     (marker,) = ax.plot([], [], [], "ro", markersize=4)
 
-    def init():
+    def init() -> Tuple[Any, Any]:
         traj_line.set_data([], [])
-        traj_line.set_3d_properties([])
+        traj_line.set_3d_properties([])  # type: ignore[attr-defined]
         marker.set_data([], [])
-        marker.set_3d_properties([])
+        marker.set_3d_properties([])  # type: ignore[attr-defined]
         return traj_line, marker
 
-    def update(frame: int):
+    def update(frame: int) -> Tuple[Any, Any]:
         traj_line.set_data(pos[:frame, 0], pos[:frame, 1])
-        traj_line.set_3d_properties(pos[:frame, 2])
+        traj_line.set_3d_properties(pos[:frame, 2])  # type: ignore[attr-defined]
         marker.set_data(pos[frame - 1 : frame, 0], pos[frame - 1 : frame, 1])
-        marker.set_3d_properties(pos[frame - 1 : frame, 2])
+        marker.set_3d_properties(pos[frame - 1 : frame, 2])  # type: ignore[attr-defined]
         return traj_line, marker
 
     anim = animation.FuncAnimation(

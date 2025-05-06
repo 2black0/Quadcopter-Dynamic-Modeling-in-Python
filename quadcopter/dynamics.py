@@ -13,12 +13,13 @@ derivative  – right‑hand side f(t, y, u, p) for SciPy `solve_ivp`
 from dataclasses import dataclass, field
 import numpy as np
 from numpy.typing import NDArray
+from typing_extensions import TypeAlias
 
 # ---------------------------------------------------------------------------
 # Type aliases for readability
 # ---------------------------------------------------------------------------
-Vec3 = NDArray[np.float64]
-Quat = NDArray[np.float64]
+Vec3: TypeAlias = NDArray[np.float64]
+Quat: TypeAlias = NDArray[np.float64]
 
 
 # ---------------------------------------------------------------------------
@@ -78,19 +79,14 @@ class QuadState:
 # Quaternion utilities (minimal set)
 # ---------------------------------------------------------------------------
 
-def _quat_mul(q: Quat, r: Quat) -> Quat:
-    """Hamilton product q ⊗ r."""
-    w1, x1, y1, z1 = q
-    w2, x2, y2, z2 = r
-    return np.array(
-        [
-            w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
-            w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
-            w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
-            w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,
-        ],
-        dtype=np.float64,
-    )
+def _quat_mul(q1: Quat, q2: Quat) -> Quat:
+    w1, x1, y1, z1 = map(float, q1)
+    w2, x2, y2, z2 = map(float, q2)
+    w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
+    x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
+    y = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
+    z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+    return np.array([w, x, y, z], dtype=np.float64)
 
 
 def _quat_to_rotm(q: Quat) -> NDArray[np.float64]:

@@ -2,23 +2,78 @@
 requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
+# --------------------------------------------------------------------
+# Core project metadata (PEP 621)
+# --------------------------------------------------------------------
 [project]
 name            = "quadcopter-dynamics"
 version         = "0.1.0"
-description     = "Quadcopter dynamic modelling, simulation and PID control"
-authors         = [{name = "2black0", email = "2black0@gmail.com"}]
-license         = {text = "MIT"}
+description     = "Light‑weight quadcopter dynamics, PID control and visualisation in pure Python."
 readme          = "README.md"
+keywords        = ["quadcopter", "simulation", "control", "PID", "education"]
 requires-python = ">=3.9"
-dependencies    = [
+license         = {text = "MIT"}
+
+authors         = [{name = "2black0", email = "2black0@gmail.com"}]
+maintainers     = [{name = "2black0", email = "2black0@gmail.com"}]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Education",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Scientific/Engineering :: Physics",
+  "Topic :: Education",
+]
+
+# hard runtime deps
+dependencies = [
   "numpy>=1.25",
   "scipy>=1.11",
   "matplotlib>=3.8",
-  "pytest>=8.2"  
 ]
 
+# --------------------------------------------------------------------
+# Optional extras (install with:  pip install quadcopter-dynamics[dev])
+# --------------------------------------------------------------------
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "black"]
+dev   = ["pytest>=8.2", "pytest-cov", "mypy", "ruff", "black"]
+docs  = ["sphinx", "sphinx-rtd-theme"]
 
+# --------------------------------------------------------------------
+# Console‑script entry point
+# --------------------------------------------------------------------
+[project.scripts]
+quadcopter-demo = "quadcopter.__main__:main"
+
+# --------------------------------------------------------------------
+# Setuptools configuration
+# --------------------------------------------------------------------
 [tool.setuptools]
-packages = ["quadcopter"]     # explicit is safer than find:
+packages = ["quadcopter"]
+# if/when you adopt src/ layout:
+# package-dir = {"" = "src"}
+include-package-data = true
+
+# --------------------------------------------------------------------
+# Tooling defaults (formatter, linter, type‑checker) – optional
+# --------------------------------------------------------------------
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I"]
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
+strict = true
+
+[tool.pyright]
+pythonVersion = "3.9"
+typeCheckingMode = "strict"
