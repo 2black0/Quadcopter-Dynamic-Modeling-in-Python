@@ -1,0 +1,14 @@
+numpy>=1.25
+scipy>=1.11
+matplotlib>=3.8
+
+[dev]
+pytest>=8.2
+pytest-cov
+mypy
+ruff
+black
+
+[docs]
+sphinx
+sphinx-rtd-theme
