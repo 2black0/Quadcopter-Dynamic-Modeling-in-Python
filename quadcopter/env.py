@@ -17,6 +17,7 @@ Typical loop
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import time
 
 import numpy as np
 from numpy.typing import NDArray
@@ -85,3 +86,34 @@ class QuadcopterEnv:
             "ang_vel": s.ang_vel,
             "t": np.array([self.t]),
         }
+
+
+@dataclass
+class RealTimeQuadcopterEnv(QuadcopterEnv):
+    """Real-time fixed-step RK4 environment with timing control."""
+    
+    real_time_factor: float = 1.0  # 1.0 = real-time, 0.5 = half speed
+    _last_step_time: float = field(init=False, default=0.0)
+    
+    def step(self, motor_omega: Vec) -> dict[str, Vec]:
+        """Advance one dt with real-time constraints."""
+        start_time = time.time()
+        
+        # Execute simulation step
+        result = super().step(motor_omega)
+        
+        # Wait to maintain real-time constraints
+        if self._last_step_time > 0:
+            elapsed = start_time - self._last_step_time
+            target_dt = self.dt / self.real_time_factor
+            sleep_time = target_dt - elapsed
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+                
+        self._last_step_time = time.time()
+        return result
+    
+    def reset(self, *, state: QuadState | None = None) -> dict[str, Vec]:
+        """Reset environment and timing."""
+        self._last_step_time = 0.0
+        return super().reset(state=state)

@@ -12,7 +12,7 @@ animate_trajectory(t, states, *, fps=30, save_path=None)
 """
 
 from pathlib import Path
-from typing import Optional, Tuple, Any
+from typing import Optional, Tuple, Any, List
 
 import numpy as np
 from numpy.typing import NDArray
@@ -121,6 +121,202 @@ def plot_trajectory(
         plt.close(fig)
 
 
+def plot_control_errors(
+    t: NDArray[np.float64],
+    states: NDArray[np.float64],
+    targets: NDArray[np.float64],
+    *,
+    save_path: str | Path | None = None,
+    show: bool = True,
+) -> None:
+    """Plot control errors over time.
+    
+    Parameters
+    ----------
+    t : (N,) ndarray
+        Time vector.
+    states : (N, 13) ndarray
+        State history.
+    targets : (N, 13) ndarray
+        Target state history.
+    save_path : str or Path, optional
+        If provided, saves the figure to this path.
+    show : bool, default True
+        If False, returns after saving without opening a GUI window.
+    """
+    pos, vel, _, _ = _extract(states)
+    target_pos, target_vel, _, _ = _extract(targets)
+    
+    # Calculate errors
+    pos_error = pos - target_pos
+    vel_error = vel - target_vel
+    
+    # Create comprehensive error plot
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    fig.suptitle("Control Errors Over Time", fontsize=16)
+    
+    # Position errors
+    axes[0, 0].plot(t, pos_error[:, 0])
+    axes[0, 0].set_title("X Position Error")
+    axes[0, 0].set_ylabel("Error [m]")
+    axes[0, 0].set_xlabel("Time [s]")
+    axes[0, 0].grid(True, linestyle=":", alpha=0.6)
+    
+    axes[0, 1].plot(t, pos_error[:, 1])
+    axes[0, 1].set_title("Y Position Error")
+    axes[0, 1].set_ylabel("Error [m]")
+    axes[0, 1].set_xlabel("Time [s]")
+    axes[0, 1].grid(True, linestyle=":", alpha=0.6)
+    
+    axes[0, 2].plot(t, pos_error[:, 2])
+    axes[0, 2].set_title("Z Position Error")
+    axes[0, 2].set_ylabel("Error [m]")
+    axes[0, 2].set_xlabel("Time [s]")
+    axes[0, 2].grid(True, linestyle=":", alpha=0.6)
+    
+    # Velocity errors
+    axes[1, 0].plot(t, vel_error[:, 0])
+    axes[1, 0].set_title("X Velocity Error")
+    axes[1, 0].set_ylabel("Error [m/s]")
+    axes[1, 0].set_xlabel("Time [s]")
+    axes[1, 0].grid(True, linestyle=":", alpha=0.6)
+    
+    axes[1, 1].plot(t, vel_error[:, 1])
+    axes[1, 1].set_title("Y Velocity Error")
+    axes[1, 1].set_ylabel("Error [m/s]")
+    axes[1, 1].set_xlabel("Time [s]")
+    axes[1, 1].grid(True, linestyle=":", alpha=0.6)
+    
+    axes[1, 2].plot(t, vel_error[:, 2])
+    axes[1, 2].set_title("Z Velocity Error")
+    axes[1, 2].set_ylabel("Error [m/s]")
+    axes[1, 2].set_xlabel("Time [s]")
+    axes[1, 2].grid(True, linestyle=":", alpha=0.6)
+    
+    fig.tight_layout()
+    
+    # Save or show ------------------------------------------------------
+    if save_path is not None:
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(save_path, dpi=150)
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+
+def plot_3d_trajectory_comparison(
+    trajectories: List[Tuple[NDArray[np.float64], str]],
+    *,
+    save_path: str | Path | None = None,
+    show: bool = True,
+) -> None:
+    """Plot 3D trajectory comparison for multiple simulations.
+    
+    Parameters
+    ----------
+    trajectories : list of (states, label) tuples
+        List of trajectories to compare.
+    save_path : str or Path, optional
+        If provided, saves the figure to this path.
+    show : bool, default True
+        If False, returns after saving without opening a GUI window.
+    """
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection="3d")
+    
+    colors = ['blue', 'red', 'green', 'orange', 'purple']
+    
+    for i, (states, label) in enumerate(trajectories):
+        pos, _, _, _ = _extract(states)
+        color = colors[i % len(colors)]
+        ax.plot(pos[:, 0], pos[:, 1], pos[:, 2], lw=2, label=label, color=color)
+    
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
+    ax.set_zlabel("z [m]")        # type: ignore[attr-defined]
+    ax.set_title("3D Trajectory Comparison")
+    ax.legend()
+    ax.view_init(elev=20, azim=135)  # type: ignore[attr-defined]
+    
+    # Save or show ------------------------------------------------------
+    if save_path is not None:
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(save_path, dpi=150)
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+
+def plot_frequency_analysis(
+    t: NDArray[np.float64],
+    signals: NDArray[np.float64],
+    signal_names: List[str],
+    *,
+    save_path: str | Path | None = None,
+    show: bool = True,
+) -> None:
+    """Plot frequency domain analysis of signals.
+    
+    Parameters
+    ----------
+    t : (N,) ndarray
+        Time vector.
+    signals : (N, M) ndarray
+        Signals to analyze (M signals).
+    signal_names : list of str
+        Names of the signals.
+    save_path : str or Path, optional
+        If provided, saves the figure to this path.
+    show : bool, default True
+        If False, returns after saving without opening a GUI window.
+    """
+    dt = t[1] - t[0]
+    fs = 1.0 / dt  # Sampling frequency
+    
+    # Compute FFT
+    n = len(t)
+    freq = np.fft.fftfreq(n, dt)[:n//2]
+    
+    fig, axes = plt.subplots(2, len(signal_names), figsize=(5*len(signal_names), 10))
+    if len(signal_names) == 1:
+        axes = axes.reshape(-1, 1)
+    
+    fig.suptitle("Frequency Domain Analysis", fontsize=16)
+    
+    for i, (signal, name) in enumerate(zip(signals.T, signal_names)):
+        # FFT
+        fft_vals = np.fft.fft(signal)
+        fft_mag = 2.0/n * np.abs(fft_vals[:n//2])
+        
+        # Time domain plot
+        axes[0, i].plot(t, signal)
+        axes[0, i].set_title(f"{name} (Time Domain)")
+        axes[0, i].set_xlabel("Time [s]")
+        axes[0, i].set_ylabel("Amplitude")
+        axes[0, i].grid(True, linestyle=":", alpha=0.6)
+        
+        # Frequency domain plot
+        axes[1, i].semilogy(freq, fft_mag)
+        axes[1, i].set_title(f"{name} (Frequency Domain)")
+        axes[1, i].set_xlabel("Frequency [Hz]")
+        axes[1, i].set_ylabel("Magnitude")
+        axes[1, i].grid(True, linestyle=":", alpha=0.6)
+        axes[1, i].set_xlim(0, fs/2)
+    
+    fig.tight_layout()
+    
+    # Save or show ------------------------------------------------------
+    if save_path is not None:
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(save_path, dpi=150)
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+
 # ---------------------------------------------------------------------------
 # Optional simple animation (Matplotlib FuncAnimation)
 # ---------------------------------------------------------------------------
@@ -193,4 +389,5 @@ def animate_trajectory(
     return anim
 
 
-__all__ = ["plot_trajectory", "animate_trajectory"]
+__all__ = ["plot_trajectory", "animate_trajectory", "plot_control_errors", 
+           "plot_3d_trajectory_comparison", "plot_frequency_analysis"]

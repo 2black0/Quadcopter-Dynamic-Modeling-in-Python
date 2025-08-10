@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 # Core project metadata (PEP 621)
 # --------------------------------------------------------------------
 [project]
-name            = "quadcopter-dynamics"
+name            = "quadcopter-sim"
 version         = "0.1.0"
 description     = "Light‑weight quadcopter dynamics, PID control and visualisation in pure Python."
 readme          = "README.md"
@@ -38,11 +38,16 @@ dependencies = [
 ]
 
 # --------------------------------------------------------------------
-# Optional extras (install with:  pip install quadcopter-dynamics[dev])
+# Optional extras (install with:  pip install quadcopter-sim[dev])
 # --------------------------------------------------------------------
 [project.optional-dependencies]
 dev   = ["pytest>=8.2", "pytest-cov", "mypy", "ruff", "black"]
 docs  = ["sphinx", "sphinx-rtd-theme"]
+rl    = ["gymnasium>=0.28"]
+control = ["scipy>=1.11"]  # For LQR and other advanced control
+fuzzy = ["scikit-fuzzy"]   # For fuzzy logic control
+data  = ["scipy>=1.11"]    # For MATLAB export and data analysis
+all   = ["gymnasium>=0.28", "scikit-fuzzy", "scipy>=1.11"]
 
 # --------------------------------------------------------------------
 # Console‑script entry point

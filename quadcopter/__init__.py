@@ -3,8 +3,9 @@ quadcopter – mini‑package for 6‑DoF quadrotor simulation & control.
 
 Typical usage
 -------------
->>> from quadcopter import simulate, AltitudePID, plot_trajectory
->>> t, states, u = simulate(4.0, 0.02, AltitudePID(kp=4, ki=2))
+>>> from quadcopter import simulate, create_pid_position_controller, plot_trajectory
+>>> controller = create_pid_position_controller([1, 1, 2])
+>>> t, states, u = simulate(4.0, 0.02, controller)
 >>> plot_trajectory(t, states, u)
 """
 
@@ -41,5 +42,36 @@ __all__ = [
     "__version__",
 ]
 
-from .env import QuadcopterEnv   # add to earlier export block
-__all__.append("QuadcopterEnv")
+from .env import QuadcopterEnv, RealTimeQuadcopterEnv   # add to earlier export block
+__all__.extend(["QuadcopterEnv", "RealTimeQuadcopterEnv"])
+
+# Conditional imports for optional features
+try:
+    from .controllers import PIDController, PositionController, LQRController
+    __all__.extend(["PIDController", "PositionController", "LQRController"])
+except ImportError:
+    pass
+
+try:
+    from .gym_env import QuadcopterGymEnv
+    __all__.append("QuadcopterGymEnv")
+except ImportError:
+    pass
+
+try:
+    from .logging import SimulationLog, simulate_with_logging, AcademicLog, simulate_with_academic_logging
+    __all__.extend(["SimulationLog", "simulate_with_logging", "AcademicLog", "simulate_with_academic_logging"])
+except ImportError:
+    pass
+
+try:
+    from .evaluation import AcademicEvaluator
+    __all__.append("AcademicEvaluator")
+except ImportError:
+    pass
+
+try:
+    from .utils import create_pid_position_controller, create_pid_attitude_controller, create_lqr_controller, create_hover_controller
+    __all__.extend(["create_pid_position_controller", "create_pid_attitude_controller", "create_lqr_controller", "create_hover_controller"])
+except ImportError:
+    pass
