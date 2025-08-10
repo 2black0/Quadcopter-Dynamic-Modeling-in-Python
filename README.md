@@ -2,7 +2,6 @@
 
 Light‑weight, strictly‑typed Python toolkit for **6‑DoF quadrotor simulation**, 3‑D plotting and step‑wise control loops — perfect for control‑systems classes, flight‑code prototyping or RL research.
 
-[![CI](https://github.com/2black0/quadcopter-sim-python/actions/workflows/ci.yml/badge.svg)](https://github.com/2black0/quadcopter-sim-python/actions) 
 [![PyPI](https://img.shields.io/pypi/v/quadcopter-sim.svg)](https://pypi.org/project/quadcopter-sim)
 
 ---
