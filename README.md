@@ -4,20 +4,33 @@ Light‑weight, strictly‑typed Python toolkit for **6‑DoF quadrotor simulati
 
 [![PyPI](https://img.shields.io/pypi/v/quadcopter-sim.svg)](https://pypi.org/project/quadcopter-sim)
 
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Command Line Interface](#command-line-interface)
+- [Core Features](#core-features)
+- [API Reference](#api-reference)
+- [Usage Examples](#usage-examples)
+- [Examples & Notebooks](#examples--notebooks)
+- [Testing & Verification](#testing--verification)
+- [Academic Use](#academic-use)
+- [Roadmap](#roadmap)
+
 ---
 
-## Installation
+## Installation
 
 ```bash
-# latest release
+# Latest release
 pip install quadcopter-sim
 
-# dev install with all optional dependencies
+# Development install with all optional dependencies
 git clone https://github.com/2black0/quadcopter-sim-python
-cd  quadcopter-sim-python
+cd quadcopter-sim-python
 pip install -e .[all]      # includes RL, control, and data analysis dependencies
 
-# install specific optional dependencies
+# Install specific optional dependencies
 pip install -e .[rl]       # Gymnasium for RL
 pip install -e .[control]  # SciPy for advanced control
 pip install -e .[data]     # SciPy for data export
@@ -26,13 +39,47 @@ pip install -e .[dev]      # Development tools
 
 ---
 
-## Comprehensive CLI
+## Quick Start
+
+### Minimal Example
+
+```python
+import numpy as np
+from quadcopter.simulation import simulate, Params
+from quadcopter.plotting import plot_trajectory
+
+p = Params()
+hover_speed = np.sqrt(p.m * p.g / (4 * p.b))          # rad/s
+
+t, s, u = simulate(
+    4.0, 0.02,
+    controller=lambda *_: np.full(4, hover_speed),
+    method="rk4",
+)
+plot_trajectory(t, s, u)
+```
+
+### Command Line Usage
+
+```bash
+# Basic hover simulation with 3D plot
+python -m quadcopter --plot
+
+# PID position control
+python -m quadcopter --controller pid --target-pos 1 1 2 --duration 10 --plot
+```
+
+---
+
+## Command Line Interface
 
 The package provides a comprehensive command-line interface for simulation, control, and analysis:
 
+### Basic Usage Examples
+
 ```bash
 # Basic hover simulation
-python -m quadcopter --plot               # 4 s hover + 3‑D figure
+python -m quadcopter --plot               # 4 s hover + 3‑D figure
 python -m quadcopter --duration 6 --csv run.csv --quiet
 
 # PID position control
@@ -45,13 +92,13 @@ python -m quadcopter --controller lqr --duration 5 --plot
 python -m quadcopter --controller pid --target-pos 1 1 2 --duration 10 --academic-log results
 
 # Advanced PID tuning
-python -m quadcopter --controller pid --target-pos 1 0 1 --duration 5 
-  --pid-kp 3 3 5 --pid-ki 0.2 0.2 0.3 --pid-kd 0.6 0.6 1.2 
+python -m quadcopter --controller pid --target-pos 1 0 1 --duration 5 \
+  --pid-kp 3 3 5 --pid-ki 0.2 0.2 0.3 --pid-kd 0.6 0.6 1.2 \
   --plot
 
 # Custom initial conditions
-python -m quadcopter --controller pid --target-pos 0 0 2 --duration 5 
-  --init-pos 0 0 1 --init-vel 0 0 0.5 
+python -m quadcopter --controller pid --target-pos 0 0 2 --duration 5 \
+  --init-pos 0 0 1 --init-vel 0 0 0.5 \
   --csv trajectory.csv --json log.json --matlab data.mat
 
 # Enhanced plotting options
@@ -59,7 +106,7 @@ python -m quadcopter --controller pid --target-pos 1 1 2 --duration 10 --plot-er
 python -m quadcopter --controller pid --target-pos 1 1 2 --duration 10 --plot-comparison
 ```
 
-### CLI Options
+### CLI Options Reference
 
 ```
 usage: python -m quadcopter [-h] [--duration DURATION] [--dt DT]
@@ -78,45 +125,41 @@ usage: python -m quadcopter [-h] [--duration DURATION] [--dt DT]
 
 Comprehensive quadcopter simulation and analysis tool.
 
-options:
-  -h, --help            show this help message and exit
-  --duration DURATION   simulation time [s]
-  --dt DT               integration step [s]
-  --method {rk45,rk4}   integration method (adaptive RK45 or fixed‑step RK4)
-  --rtol RTOL           solver rtol
-  --atol ATOL           solver atol
-  --controller {hover,pid,lqr}
-                        controller type to use
-  --pid-kp PID_KP PID_KP PID_KP
-                        PID Kp gains for x, y, z axes
-  --pid-ki PID_KI PID_KI PID_KI
-                        PID Ki gains for x, y, z axes
-  --pid-kd PID_KD PID_KD PID_KD
-                        PID Kd gains for x, y, z axes
-  --target-pos TARGET_POS TARGET_POS TARGET_POS
-                        target position [x, y, z] for position controller
-  --plot                show matplotlib figure
-  --csv CSV             save (t, state, control) to CSV
-  --json JSON           save simulation log to JSON
-  --matlab MATLAB       save simulation log to MATLAB .mat file
-  --academic-log ACADEMIC_LOG
-                        enable academic logging and save to directory
-  --controller-type {pid,lqr,rl}
-                        controller type for academic logging
-  --init-pos INIT_POS INIT_POS INIT_POS
-                        initial position [x, y, z]
-  --init-vel INIT_VEL INIT_VEL INIT_VEL
-                        initial velocity [vx, vy, vz]
-  --quiet               suppress info output
-  --verbose             enable verbose output
+Simulation Parameters:
+  --duration DURATION       simulation time [s]
+  --dt DT                   integration step [s]
+  --method {rk45,rk4}       integration method (adaptive RK45 or fixed‑step RK4)
+  --rtol RTOL               solver rtol
+  --atol ATOL               solver atol
+
+Controller Options:
+  --controller {hover,pid,lqr}    controller type to use
+  --pid-kp PID_KP PID_KP PID_KP   PID Kp gains for x, y, z axes
+  --pid-ki PID_KI PID_KI PID_KI   PID Ki gains for x, y, z axes
+  --pid-kd PID_KD PID_KD PID_KD   PID Kd gains for x, y, z axes
+  --target-pos TARGET_POS TARGET_POS TARGET_POS  target position [x, y, z]
+
+Initial Conditions:
+  --init-pos INIT_POS INIT_POS INIT_POS    initial position [x, y, z]
+  --init-vel INIT_VEL INIT_VEL INIT_VEL    initial velocity [vx, vy, vz]
+
+Output Options:
+  --plot                    show matplotlib figure
+  --csv CSV                 save (t, state, control) to CSV
+  --json JSON               save simulation log to JSON
+  --matlab MATLAB           save simulation log to MATLAB .mat file
+  --academic-log ACADEMIC_LOG    enable academic logging and save to directory
+  --quiet                   suppress info output
+  --verbose                 enable verbose output
 ```
 
 ---
 
-## Enhanced Features
+## Core Features
 
-### Advanced Control Systems
-The library now includes comprehensive control system implementations:
+### 1. Advanced Control Systems
+
+Comprehensive control system implementations:
 
 ```python
 from quadcopter.controllers import PIDController, PositionController, LQRController
@@ -135,7 +178,8 @@ B = np.eye(12, 4)  # Input matrix
 lqr_ctrl = LQRController(A=A, B=B, Q=np.eye(12), R=np.eye(4))
 ```
 
-### Reinforcement Learning Integration
+### 2. Reinforcement Learning Integration
+
 Gymnasium-compatible environment for RL research:
 
 ```python
@@ -147,7 +191,8 @@ action = env.action_space.sample()  # Random action
 obs, reward, terminated, truncated, info = env.step(action)
 ```
 
-### Real-time Simulation
+### 3. Real-time Simulation
+
 Enhanced environment with real-time capabilities:
 
 ```python
@@ -157,7 +202,8 @@ from quadcopter.env import RealTimeQuadcopterEnv
 env = RealTimeQuadcopterEnv(dt=0.02, real_time_factor=0.5)
 ```
 
-### 5. Comprehensive Logging
+### 4. Comprehensive Logging
+
 Advanced logging with multiple export formats:
 
 ```python
@@ -169,7 +215,8 @@ log.save_json("simulation.json")    # JSON for structured data
 log.save_matlab("simulation.mat")   # MATLAB for advanced analysis
 ```
 
-### 6. Academic Evaluation and Visualization
+### 5. Academic Evaluation and Visualization
+
 Comprehensive academic evaluation tools for research publications:
 
 ```python
@@ -198,7 +245,8 @@ evaluator.plot_error_analysis("errors.png")
 evaluator.plot_control_effort("control.png")
 ```
 
-### Enhanced Visualization
+### 6. Enhanced Visualization
+
 Comprehensive plotting capabilities:
 
 ```python
@@ -224,54 +272,44 @@ plot_frequency_analysis(t, signals, ["X Position", "Y Position", "Z Position"])
 
 ---
 
-## API at a glance
+## API Reference
 
-| Function / class                             | Purpose                                                                                                                                                                      | Key arguments                            |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| **`quadcopter.simulation.simulate`**         | One‑shot trajectory generator (adaptive RK45 or fixed‑step RK4). Accepts **either** a controller object with `.update(t,state)` **or** a plain function `(t,state)→motor_ω`. | `duration`, `dt`, `controller`, `method` |
-| **`quadcopter.env.QuadcopterEnv`**           | Real‑time, fixed‑step RK4 environment – one `reset()`, then `step(motor_omega)`; ideal for PID / MPC / RL loops.                                                             | `dt`, `reset()`, `step()`                |
-| **`quadcopter.env.RealTimeQuadcopterEnv`**   | Real-time environment with timing control and synchronization.                                                                                                               | `dt`, `real_time_factor`, `reset()`, `step()` |
-| **`quadcopter.gym_env.QuadcopterGymEnv`**    | Gymnasium-compatible environment for RL training.                                                                                                                            | `dt`, `max_steps`                        |
-| **`quadcopter.dynamics.Params`**             | Physical constants (mass, arm length, thrust factor …).                                                                                                                      | edit attributes to match your air‑frame  |
-| **`quadcopter.dynamics.QuadState`**          | Minimal dataclass for the 13‑dim state.                                                                                                                                      | `.from_vector(vec)` / `.as_vector()`     |
-| **`quadcopter.controllers.PIDController`**   | PID controller with anti-windup and output limits.                                                                                                                           | `kp`, `ki`, `kd`, `max_output`           |
-| **`quadcopter.controllers.PositionController`** | 3D position controller using PID for each axis.                                                                                                                              | `x_pid`, `y_pid`, `z_pid`, `target_pos`  |
-| **`quadcopter.controllers.LQRController`**   | Linear Quadratic Regulator controller.                                                                                                                                       | `A`, `B`, `Q`, `R` matrices              |
-| **`quadcopter.logging.SimulationLog`**       | Comprehensive logging with multiple export formats.                                                                                                                          | `save_csv()`, `save_json()`, `save_matlab()` |
-| **`quadcopter.logging.AcademicLog`**         | Academic-grade logging for research publications with comprehensive data capture.                                                                                           | `add_entry()`, `save_csv()`, `save_json()`, `save_matlab()` |
-| **`quadcopter.logging.simulate_with_academic_logging`** | Simulation with academic-grade logging.                                                                                                                             | `duration`, `dt`, `controller`, `ref_position` |
-| **`quadcopter.evaluation.AcademicEvaluator`** | Academic evaluation tools for performance analysis and visualization.                                                                                                       | `plot_3d_trajectory()`, `plot_state_tracking()`, `generate_performance_report()` |
-| **`quadcopter.plotting.plot_trajectory`**    | Static 3‑D + time‑series figure.                                                                                                                                             | `t, states, controls`                    |
-| **`quadcopter.plotting.plot_control_errors`** | Control error analysis over time.                                                                                                                                            | `t, states, targets`                     |
-| **`quadcopter.plotting.plot_3d_trajectory_comparison`** | Compare multiple trajectories in 3D.                                                                                                                                  | `trajectories`                           |
-| **`quadcopter.plotting.plot_frequency_analysis`** | Frequency domain analysis of signals.                                                                                                                                | `t, signals, signal_names`               |
-| **`quadcopter.plotting.animate_trajectory`** | Matplotlib animation (MP4 / Jupyter).                                                                                                                                        | `t, states`, `fps`, `save_path`          |
-| **`quadcopter.utils.create_pid_position_controller`** | Create PID position controller with default or custom gains.                                                                                                         | `target_pos`, `kp`, `ki`, `kd`           |
-| **`quadcopter.utils.create_pid_attitude_controller`** | Create PID attitude controller with default or custom gains.                                                                                                         | `target_attitude`, `kp`, `ki`, `kd`      |
-| **`quadcopter.utils.create_lqr_controller`** | Create LQR controller with default matrices.                                                                                                                          | `params`, `Q`, `R`                       |
-| **`quadcopter.utils.create_hover_controller`** | Create simple hover controller.                                                                                                                                      | `params`                                 |
+| Function / Class | Purpose | Key Arguments |
+|------------------|---------|---------------|
+| **Core Simulation** |
+| `quadcopter.simulation.simulate` | One‑shot trajectory generator (adaptive RK45 or fixed‑step RK4) | `duration`, `dt`, `controller`, `method` |
+| `quadcopter.dynamics.Params` | Physical constants (mass, arm length, thrust factor) | edit attributes to match your air‑frame |
+| `quadcopter.dynamics.QuadState` | Minimal dataclass for the 13‑dim state | `.from_vector(vec)` / `.as_vector()` |
+| **Environments** |
+| `quadcopter.env.QuadcopterEnv` | Real‑time, fixed‑step RK4 environment | `dt`, `reset()`, `step()` |
+| `quadcopter.env.RealTimeQuadcopterEnv` | Real-time environment with timing control | `dt`, `real_time_factor`, `reset()`, `step()` |
+| `quadcopter.gym_env.QuadcopterGymEnv` | Gymnasium-compatible environment for RL training | `dt`, `max_steps` |
+| **Controllers** |
+| `quadcopter.controllers.PIDController` | PID controller with anti-windup and output limits | `kp`, `ki`, `kd`, `max_output` |
+| `quadcopter.controllers.PositionController` | 3D position controller using PID for each axis | `x_pid`, `y_pid`, `z_pid`, `target_pos` |
+| `quadcopter.controllers.LQRController` | Linear Quadratic Regulator controller | `A`, `B`, `Q`, `R` matrices |
+| **Logging & Analysis** |
+| `quadcopter.logging.SimulationLog` | Comprehensive logging with multiple export formats | `save_csv()`, `save_json()`, `save_matlab()` |
+| `quadcopter.logging.AcademicLog` | Academic-grade logging for research publications | `add_entry()`, `save_csv()`, `save_json()`, `save_matlab()` |
+| `quadcopter.logging.simulate_with_academic_logging` | Simulation with academic-grade logging | `duration`, `dt`, `controller`, `ref_position` |
+| `quadcopter.evaluation.AcademicEvaluator` | Academic evaluation tools for performance analysis | `plot_3d_trajectory()`, `plot_state_tracking()`, `generate_performance_report()` |
+| **Visualization** |
+| `quadcopter.plotting.plot_trajectory` | Static 3‑D + time‑series figure | `t, states, controls` |
+| `quadcopter.plotting.plot_control_errors` | Control error analysis over time | `t, states, targets` |
+| `quadcopter.plotting.plot_3d_trajectory_comparison` | Compare multiple trajectories in 3D | `trajectories` |
+| `quadcopter.plotting.plot_frequency_analysis` | Frequency domain analysis of signals | `t, signals, signal_names` |
+| `quadcopter.plotting.animate_trajectory` | Matplotlib animation (MP4 / Jupyter) | `t, states`, `fps`, `save_path` |
+| **Utilities** |
+| `quadcopter.utils.create_pid_position_controller` | Create PID position controller with default gains | `target_pos`, `kp`, `ki`, `kd` |
+| `quadcopter.utils.create_pid_attitude_controller` | Create PID attitude controller with default gains | `target_attitude`, `kp`, `ki`, `kd` |
+| `quadcopter.utils.create_lqr_controller` | Create LQR controller with default matrices | `params`, `Q`, `R` |
+| `quadcopter.utils.create_hover_controller` | Create simple hover controller | `params` |
 
 ---
 
-### Minimal one‑liner
+## Usage Examples
 
-```python
-import numpy as np
-from quadcopter.simulation import simulate, Params
-from quadcopter.plotting   import plot_trajectory
-
-p = Params()
-hover_speed = np.sqrt(p.m * p.g / (4 * p.b))          # rad/s
-
-t, s, u = simulate(
-    4.0, 0.02,
-    controller=lambda *_: np.full(4, hover_speed),
-    method="rk4",
-)
-plot_trajectory(t, s, u)
-```
-
-### Simplified PID Position Control Example
+### 1. Simplified PID Position Control
 
 ```python
 from quadcopter import simulate, create_pid_position_controller
@@ -308,10 +346,10 @@ t, states, controls = simulate(
 plot_trajectory(t, states, controls)
 ```
 
-### PID Position Control Example
+### 2. Advanced PID Position Control
 
 ```python
-from quadcopter import simulate, PositionController
+from quadcopter import simulate, PositionController, PIDController
 from quadcopter.dynamics import QuadState
 from quadcopter.plotting import plot_trajectory
 import numpy as np
@@ -345,7 +383,7 @@ t, states, controls = simulate(
 plot_trajectory(t, states, controls)
 ```
 
-### Reinforcement Learning Example
+### 3. Reinforcement Learning
 
 ```python
 from quadcopter.gym_env import QuadcopterGymEnv
@@ -369,7 +407,7 @@ for _ in range(1000):
         obs, info = env.reset()
 ```
 
-### Real-time Simulation Example
+### 4. Real-time Simulation
 
 ```python
 from quadcopter.env import RealTimeQuadcopterEnv
@@ -391,7 +429,7 @@ for _ in range(200):  # 4 seconds
 print("Simulation completed!")
 ```
 
-### Comprehensive Logging Example
+### 5. Comprehensive Logging
 
 ```python
 from quadcopter.logging import simulate_with_logging
@@ -420,7 +458,7 @@ log.save_json("trajectory_data.json")
 log.save_matlab("trajectory_data.mat")
 ```
 
-### Academic Evaluation Example
+### 6. Academic Evaluation
 
 ```python
 from quadcopter.logging import simulate_with_academic_logging
@@ -466,63 +504,46 @@ print("Academic evaluation completed! Results saved to 'academic_results' direct
 
 ---
 
-## Verification
-
-```bash
-pytest -q                # unit + perf tests (should be all dots)
-mypy quadcopter          # static typing gate (should be 'Success')
-python -m quadcopter --quiet   # CLI smoke test
-```
-
-All three finish without errors; a 4 s RK4 run takes ≈ 0.05–0.08 s on a 2020‑era laptop.
-
----
-
-## Examples
+## Examples & Notebooks
 
 The library includes comprehensive examples demonstrating various features:
 
 ### Python Examples
-- `examples/pid_control_example.py` - PID position control
-- `examples/lqr_control_example.py` - LQR control
-- `examples/rl_training_example.py` - Reinforcement learning
-- `examples/real_time_simulation.py` - Real-time simulation
-- `examples/enhanced_plotting_example.py` - Advanced visualization
-- `examples/enhanced_logging_example.py` - Comprehensive logging
-- `examples/academic_evaluation_example.py` - Academic evaluation and analysis
+
+Run any example with: `python examples/<example_name>.py`
+
+- **`pid_control_example.py`** - PID position control demonstration
+- **`lqr_control_example.py`** - LQR control implementation
+- **`rl_training_example.py`** - Reinforcement learning training
+- **`real_time_simulation.py`** - Real-time simulation with timing
+- **`enhanced_plotting_example.py`** - Advanced visualization techniques
+- **`enhanced_logging_example.py`** - Comprehensive data logging
+- **`academic_evaluation_example.py`** - Academic evaluation and analysis
 
 ### Jupyter Notebooks
-- `notebooks/control_system_design.ipynb` - Interactive PID/LQR tuning
-- `notebooks/rl_training_tutorial.ipynb` - RL experimentation
-- `notebooks/data_analysis.ipynb` - Log analysis and visualization
-- `notebooks/performance_comparison.ipynb` - Comparing control methods
 
-Run any Python example with:
-```bash
-python examples/pid_control_example.py
-```
+Run any notebook with: `jupyter notebook notebooks/<notebook_name>.ipynb`
 
-Run any Jupyter notebook with:
-```bash
-jupyter notebook notebooks/control_system_design.ipynb
-```
+- **`control_system_design.ipynb`** - Interactive PID/LQR tuning
+- **`rl_training_tutorial.ipynb`** - RL experimentation and analysis
+- **`data_analysis.ipynb`** - Log analysis and visualization
+- **`performance_comparison.ipynb`** - Comparing different control methods
 
 ---
 
-## Road‑map
+## Testing & Verification
 
-✅ Advanced control systems (PID, LQR, Fuzzy Logic)  
-✅ Gymnasium‑compatible wrapper for RL training  
-✅ Comprehensive logging for academic research  
-✅ Real-time simulation capabilities  
-✅ Enhanced visualization and analysis tools  
-✅ Academic evaluation and analysis tools for research publications  
-✅ Optional aerodynamic drag model  
-✅ Notebook benchmark for tuning PID / LQR / MPC / RL policies  
+```bash
+pytest -q                        # Unit + performance tests (should be all dots)
+mypy quadcopter                  # Static typing gate (should be 'Success')
+python -m quadcopter --quiet     # CLI smoke test
+```
+
+All three commands should finish without errors. A 4s RK4 simulation typically takes ≈ 0.05–0.08s on a 2020‑era laptop.
 
 ---
 
-## Academic Use
+## Academic Use
 
 This library is designed for academic research and education. When using in research publications, please cite:
 
@@ -533,9 +554,29 @@ This library is designed for academic research and education. When using in rese
   year = {2025},
   doi = {TBD},
   url = {https://github.com/2black0/quadcopter-sim-python}
-```
+}
 ```
 
 ---
 
-Released under the **MIT License**. Contributions and issues are very welcome!
+## Roadmap
+
+✅ **Completed Features:**
+- Advanced control systems (PID, LQR, Fuzzy Logic)
+- Gymnasium‑compatible wrapper for RL training
+- Comprehensive logging for academic research
+- Real-time simulation capabilities
+- Enhanced visualization and analysis tools
+- Academic evaluation and analysis tools for research publications
+- Optional aerodynamic drag model
+- Notebook benchmark for tuning PID / LQR / MPC / RL policies
+
+🚧 **Future Development:**
+- More controller types (MPC, Sliding Mode, etc.)
+- Advanced disturbance models
+- Multi-agent simulation capabilities
+- Integration with hardware-in-the-loop testing
+
+---
+
+**Released under the MIT License.** Contributions and issues are very welcome!
