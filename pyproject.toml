@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 # --------------------------------------------------------------------
 [project]
 name            = "quadcopter-sim"
-version         = "0.2.0"
+version         = "0.3.0"
 description     = "Light‑weight quadcopter dynamics, PID control and visualisation in pure Python."
 readme          = "README.md"
 keywords        = ["quadcopter", "simulation", "control", "PID", "education"]
