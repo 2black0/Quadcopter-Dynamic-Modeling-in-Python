@@ -15,12 +15,12 @@ from .logging import AcademicLog
 class AcademicEvaluator:
     """Academic evaluator for quadcopter control system performance analysis."""
     
-    def __init__(self, log: AcademicLog):
+    def __init__(self, log: AcademicLog) -> None:
         """Initialize evaluator with simulation log data."""
         self.log = log
         self.times = np.array(log.times)
         
-    def plot_3d_trajectory(self, save_path: Optional[str] = None, show: bool = True):
+    def plot_3d_trajectory(self, save_path: Optional[str] = None, show: bool = True) -> None:
         """Plot 3D trajectory with reference path."""
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
@@ -56,7 +56,7 @@ class AcademicEvaluator:
         else:
             plt.close(fig)
     
-    def plot_state_tracking(self, save_path: Optional[str] = None, show: bool = True):
+    def plot_state_tracking(self, save_path: Optional[str] = None, show: bool = True) -> None:
         """Plot state variables against reference values over time."""
         fig, axes = plt.subplots(3, 2, figsize=(15, 12))
         fig.suptitle('State Tracking Performance', fontsize=16)
@@ -121,7 +121,7 @@ class AcademicEvaluator:
         else:
             plt.close(fig)
     
-    def plot_error_analysis(self, save_path: Optional[str] = None, show: bool = True):
+    def plot_error_analysis(self, save_path: Optional[str] = None, show: bool = True) -> None:
         """Plot error signals over time."""
         fig, axes = plt.subplots(3, 2, figsize=(15, 12))
         fig.suptitle('Error Analysis', fontsize=16)
@@ -178,7 +178,7 @@ class AcademicEvaluator:
         else:
             plt.close(fig)
     
-    def plot_control_effort(self, save_path: Optional[str] = None, show: bool = True):
+    def plot_control_effort(self, save_path: Optional[str] = None, show: bool = True) -> None:
         """Plot control inputs over time."""
         fig, axes = plt.subplots(2, 2, figsize=(15, 10))
         fig.suptitle('Control Effort Analysis', fontsize=16)
@@ -230,7 +230,7 @@ class AcademicEvaluator:
         else:
             plt.close(fig)
     
-    def plot_pid_contributions(self, save_path: Optional[str] = None, show: bool = True):
+    def plot_pid_contributions(self, save_path: Optional[str] = None, show: bool = True) -> None:
         """Plot PID term contributions (for PID controllers)."""
         if not self.log.pid_terms or len(self.log.pid_terms) == 0:
             print("No PID data available for plotting")
@@ -295,7 +295,7 @@ class AcademicEvaluator:
         else:
             plt.close(fig)
     
-    def plot_rl_learning_curve(self, save_path: Optional[str] = None, show: bool = True):
+    def plot_rl_learning_curve(self, save_path: Optional[str] = None, show: bool = True) -> None:
         """Plot RL learning curve (cumulative reward per episode)."""
         if not self.log.rl_rewards or len(self.log.rl_rewards) == 0:
             print("No RL data available for plotting")
@@ -362,7 +362,7 @@ class AcademicEvaluator:
         print(report)
         return metrics
     
-    def generate_comprehensive_analysis(self, output_dir: str = "analysis_results"):
+    def generate_comprehensive_analysis(self, output_dir: str = "analysis_results") -> Dict[str, Dict[str, float]]:
         """Generate comprehensive academic analysis with all plots and metrics."""
         # Create output directory
         Path(output_dir).mkdir(parents=True, exist_ok=True)

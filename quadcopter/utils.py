@@ -6,17 +6,18 @@ and performing typical setup tasks, reducing code duplication in examples
 and user applications.
 """
 
-from typing import Optional
+from typing import Optional, Tuple
 import numpy as np
 from .controllers import PIDController, PositionController, LQRController, AttitudeController
 from .dynamics import Params
+from .simulation import HoverController
 
 
 def create_pid_position_controller(
     target_pos: np.ndarray,
-    kp: tuple = (2.0, 2.0, 4.0),
-    ki: tuple = (0.1, 0.1, 0.2),
-    kd: tuple = (0.5, 0.5, 1.0)
+    kp: Tuple[float, float, float] = (2.0, 2.0, 4.0),
+    ki: Tuple[float, float, float] = (0.1, 0.1, 0.2),
+    kd: Tuple[float, float, float] = (0.5, 0.5, 1.0)
 ) -> PositionController:
     """
     Create a PID position controller with default or custom gains.
@@ -47,9 +48,9 @@ def create_pid_position_controller(
 
 def create_pid_attitude_controller(
     target_attitude: np.ndarray = np.array([0.0, 0.0, 0.0]),
-    kp: tuple = (1.0, 1.0, 1.0),
-    ki: tuple = (0.01, 0.01, 0.01),
-    kd: tuple = (0.1, 0.1, 0.1)
+    kp: Tuple[float, float, float] = (1.0, 1.0, 1.0),
+    ki: Tuple[float, float, float] = (0.01, 0.01, 0.01),
+    kd: Tuple[float, float, float] = (0.1, 0.1, 0.1)
 ) -> AttitudeController:
     """
     Create a PID attitude controller with default or custom gains.
@@ -138,7 +139,6 @@ def create_hover_controller(params: Optional[Params] = None) -> "HoverController
     HoverController
         Configured hover controller
     """
-    from .simulation import HoverController
     if params is None:
         params = Params()
     return HoverController(params)

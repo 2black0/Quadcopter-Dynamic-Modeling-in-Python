@@ -26,7 +26,7 @@ from matplotlib import animation
 # ---------------------------------------------------------------------------
 
 
-def _extract(trajectory: NDArray[np.float64]) -> Tuple[NDArray, NDArray, NDArray, NDArray]:
+def _extract(trajectory: NDArray[np.float64]) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
     """Return position, velocity, quaternion, angular‑rate views from stacked state array."""
     pos = trajectory[:, 0:3]
     vel = trajectory[:, 3:6]
@@ -72,9 +72,9 @@ def plot_trajectory(
     ax3d.plot(pos[:, 0], pos[:, 1], pos[:, 2], lw=2)
     ax3d.set_xlabel("x [m]")
     ax3d.set_ylabel("y [m]")
-    ax3d.set_zlabel("z [m]")        # type: ignore[attr-defined]
+    ax3d.set_zlabel("z [m]")
     ax3d.set_title("Trajectory (world frame)")
-    ax3d.view_init(elev=20, azim=135)  # type: ignore[attr-defined]
+    ax3d.view_init(elev=20, azim=135)
     ax3d.autoscale(enable=True, axis="both", tight=True)
 
     # position components ----------------------------------------------
@@ -234,10 +234,10 @@ def plot_3d_trajectory_comparison(
     
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")
-    ax.set_zlabel("z [m]")        # type: ignore[attr-defined]
+    ax.set_zlabel("z [m]")
     ax.set_title("3D Trajectory Comparison")
     ax.legend()
-    ax.view_init(elev=20, azim=135)  # type: ignore[attr-defined]
+    ax.view_init(elev=20, azim=135)
     
     # Save or show ------------------------------------------------------
     if save_path is not None:
@@ -349,27 +349,27 @@ def animate_trajectory(
 
     ax.set_xlim(*_axis_limits(pos[:, 0]))
     ax.set_ylim(*_axis_limits(pos[:, 1]))
-    ax.set_zlim(*_axis_limits(pos[:, 2]))  # type: ignore[attr-defined]
+    ax.set_zlim(*_axis_limits(pos[:, 2]))
 
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")
-    ax.set_zlabel("z [m]")          # type: ignore[attr-defined]
+    ax.set_zlabel("z [m]")
 
     (traj_line,) = ax.plot([], [], [], lw=2)
     (marker,) = ax.plot([], [], [], "ro", markersize=4)
 
     def init() -> Tuple[Any, Any]:
         traj_line.set_data([], [])
-        traj_line.set_3d_properties([])  # type: ignore[attr-defined]
+        traj_line.set_3d_properties([])
         marker.set_data([], [])
-        marker.set_3d_properties([])  # type: ignore[attr-defined]
+        marker.set_3d_properties([])
         return traj_line, marker
 
     def update(frame: int) -> Tuple[Any, Any]:
         traj_line.set_data(pos[:frame, 0], pos[:frame, 1])
-        traj_line.set_3d_properties(pos[:frame, 2])  # type: ignore[attr-defined]
+        traj_line.set_3d_properties(pos[:frame, 2])
         marker.set_data(pos[frame - 1 : frame, 0], pos[frame - 1 : frame, 1])
-        marker.set_3d_properties(pos[frame - 1 : frame, 2])  # type: ignore[attr-defined]
+        marker.set_3d_properties(pos[frame - 1 : frame, 2])
         return traj_line, marker
 
     anim = animation.FuncAnimation(

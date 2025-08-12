@@ -14,22 +14,24 @@ try:
 except ImportError:
     # Fallback for environments without gymnasium
     class MockGym:
-        def __init__(self):
+        def __init__(self) -> None:
             class spaces:
                 Box = None
             self.spaces = spaces
-    gym = MockGym()
+    gym = MockGym()  # type: ignore
 
 import numpy as np
+from numpy.typing import NDArray
+from typing import Dict, Any, Tuple
 from .env import QuadcopterEnv
 from .dynamics import QuadState
 
-class QuadcopterGymEnv(gym.Env):
+class QuadcopterGymEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
     """Gymnasium-compatible environment for quadcopter RL."""
     
     metadata = {"render_modes": ["human"], "render_fps": 50}
     
-    def __init__(self, dt: float = 0.02, max_steps: int = 2000):
+    def __init__(self, dt: float = 0.02, max_steps: int = 2000) -> None:
         super().__init__()
         
         self.quad_env = QuadcopterEnv(dt=dt)
@@ -52,11 +54,11 @@ class QuadcopterGymEnv(gym.Env):
         self.position_tolerance = 0.1  # meters
         self.orientation_tolerance = 0.1  # radians
         
-    def _get_obs(self):
+    def _get_obs(self) -> NDArray[np.float32]:
         """Get current observation as a flat array."""
         return self.quad_env.state.as_vector().astype(np.float32)
     
-    def _get_info(self):
+    def _get_info(self) -> Dict[str, Any]:
         """Get additional info."""
         return {
             "time": self.quad_env.t,
@@ -66,7 +68,7 @@ class QuadcopterGymEnv(gym.Env):
             "angular_velocity": self.quad_env.state.ang_vel
         }
     
-    def reset(self, seed=None, options=None):
+    def reset(self, seed: int | None = None, options: Dict[str, Any] | None = None) -> Tuple[NDArray[np.float32], Dict[str, Any]]:
         """Reset the environment."""
         super().reset(seed=seed)
         
@@ -83,10 +85,10 @@ class QuadcopterGymEnv(gym.Env):
         
         return self._get_obs(), self._get_info()
     
-    def step(self, action):
+    def step(self, action: NDArray[np.float32]) -> Tuple[NDArray[np.float32], float, bool, bool, Dict[str, Any]]:
         """Execute one time step."""
         # Apply action (motor speeds)
-        obs_dict = self.quad_env.step(action)
+        obs_dict = self.quad_env.step(action.astype(np.float64))
         
         # Get observation
         observation = self._get_obs()
@@ -106,7 +108,7 @@ class QuadcopterGymEnv(gym.Env):
         
         return observation, reward, terminated, truncated, info
     
-    def _calculate_reward(self):
+    def _calculate_reward(self) -> float:
         """Calculate reward based on current state."""
         pos_error = np.linalg.norm(self.quad_env.state.pos - self.position_target)
         vel_error = np.linalg.norm(self.quad_env.state.vel)
@@ -125,7 +127,7 @@ class QuadcopterGymEnv(gym.Env):
         
         return float(total_reward)
     
-    def _is_terminated(self):
+    def _is_terminated(self) -> bool:
         """Check if episode should be terminated."""
         # Terminate if position is too far from target
         pos_error = np.linalg.norm(self.quad_env.state.pos - self.position_target)
@@ -138,7 +140,7 @@ class QuadcopterGymEnv(gym.Env):
             
         return False
     
-    def render(self):
+    def render(self) -> None:
         """Render the environment (placeholder)."""
         pass
 

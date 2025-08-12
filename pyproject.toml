@@ -47,7 +47,7 @@ rl    = ["gymnasium>=0.28"]
 control = ["scipy>=1.11"]  # For LQR and other advanced control
 fuzzy = ["scikit-fuzzy"]   # For fuzzy logic control
 data  = ["scipy>=1.11"]    # For MATLAB export and data analysis
-all   = ["gymnasium>=0.28", "scikit-fuzzy", "scipy>=1.11"]
+all   = ["pytest>=8.2", "pytest-cov", "mypy", "ruff", "black", "gymnasium>=0.28", "scikit-fuzzy", "scipy>=1.11"]
 
 # --------------------------------------------------------------------
 # Console‑script entry point
@@ -75,7 +75,7 @@ line-length = 88
 select = ["E", "F", "I"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.12"
 ignore_missing_imports = true
 strict = true
 

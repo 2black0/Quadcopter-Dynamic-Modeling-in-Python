@@ -11,10 +11,11 @@ Classes:
 
 import json
 import csv
-from dataclasses import dataclass, asdict
-from typing import List, Dict, Any, Optional
+from dataclasses import dataclass, asdict, field
+from typing import List, Dict, Any, Optional, Callable
 from pathlib import Path
 import numpy as np
+from numpy.typing import NDArray
 from datetime import datetime
 from .dynamics import QuadState, Params
 from .simulation import simulate, BaseController
@@ -30,22 +31,16 @@ class SimulationLog:
     method: str = "rk4"
     
     # Simulation data
-    times: List[float] = None
-    states: List[Dict[str, Any]] = None
-    controls: List[List[float]] = None
-    rewards: Optional[List[float]] = None  # For RL applications
+    times: List[float] = field(default_factory=list)
+    states: List[Dict[str, Any]] = field(default_factory=list)
+    controls: List[List[float]] = field(default_factory=list)
+    rewards: Optional[List[float]] = field(default_factory=list)  # For RL applications
     
-    def __post_init__(self):
-        if self.times is None:
-            self.times = []
-        if self.states is None:
-            self.states = []
-        if self.controls is None:
-            self.controls = []
+    def __post_init__(self) -> None:
         if not self.timestamp:
             self.timestamp = datetime.now().isoformat()
     
-    def add_entry(self, time: float, state: QuadState, control: np.ndarray, reward: Optional[float] = None):
+    def add_entry(self, time: float, state: QuadState, control: np.ndarray, reward: Optional[float] = None) -> None:
         """Add a time step entry to the log."""
         self.times.append(time)
         self.states.append({
@@ -58,13 +53,13 @@ class SimulationLog:
         if reward is not None and self.rewards is not None:
             self.rewards.append(reward)
     
-    def save_json(self, filepath: str):
+    def save_json(self, filepath: str) -> None:
         """Save log to JSON format."""
         data = asdict(self)
         with open(filepath, 'w') as f:
             json.dump(data, f, indent=2)
     
-    def save_csv(self, filepath: str):
+    def save_csv(self, filepath: str) -> None:
         """Save log to CSV format for analysis."""
         with open(filepath, 'w', newline='') as f:
             writer = csv.writer(f)
@@ -100,7 +95,7 @@ class SimulationLog:
                     
                 writer.writerow(row)
     
-    def save_matlab(self, filepath: str):
+    def save_matlab(self, filepath: str) -> None:
         """Save log to MATLAB .mat format."""
         try:
             from scipy.io import savemat
@@ -126,7 +121,7 @@ class SimulationLog:
 def simulate_with_logging(
     duration: float,
     dt: float,
-    controller: BaseController,
+    controller: BaseController | Callable[[float, QuadState], NDArray[np.float64]],
     initial_state: QuadState | None = None,
     params: Params = Params(),
     *,
@@ -182,100 +177,51 @@ class AcademicLog:
     controller_type: str = "unknown"
     
     # Core simulation data (applicable to all controllers)
-    times: List[float] = None
+    times: List[float] = field(default_factory=list)
     
     # State variables
-    positions: List[List[float]] = None          # x, y, z
-    orientations: List[List[float]] = None       # roll, pitch, yaw (Euler angles)
-    velocities: List[List[float]] = None         # vx, vy, vz (body frame)
-    angular_rates: List[List[float]] = None      # p, q, r (body frame)
+    positions: List[List[float]] = field(default_factory=list)
+    orientations: List[List[float]] = field(default_factory=list)
+    velocities: List[List[float]] = field(default_factory=list)
+    angular_rates: List[List[float]] = field(default_factory=list)
     
     # Reference trajectories (setpoints)
-    ref_positions: List[List[float]] = None      # x_ref, y_ref, z_ref
-    ref_orientations: List[List[float]] = None   # phi_ref, theta_ref, psi_ref
+    ref_positions: List[List[float]] = field(default_factory=list)
+    ref_orientations: List[List[float]] = field(default_factory=list)
     
     # Error signals
-    position_errors: List[List[float]] = None    # e_x, e_y, e_z
-    orientation_errors: List[List[float]] = None # e_phi, e_theta, e_psi
+    position_errors: List[List[float]] = field(default_factory=list)
+    orientation_errors: List[List[float]] = field(default_factory=list)
     
     # Control inputs
-    thrusts: List[float] = None                  # Total thrust U1
-    torques: List[List[float]] = None            # tau_phi, tau_theta, tau_psi
-    motor_speeds: List[List[float]] = None       # omega_1, omega_2, omega_3, omega_4
+    thrusts: List[float] = field(default_factory=list)
+    torques: List[List[float]] = field(default_factory=list)
+    motor_speeds: List[List[float]] = field(default_factory=list)
     
     # External disturbances (if any)
-    disturbances: List[List[float]] = None       # Force disturbances in x, y, z
+    disturbances: List[List[float]] = field(default_factory=list)
     
     # Controller-specific data
     # PID Controller data
-    pid_gains: List[Dict[str, Dict[str, float]]] = None  # Kp, Ki, Kd for each axis
-    pid_terms: List[Dict[str, Dict[str, float]]] = None  # P, I, D term contributions
+    pid_gains: List[Dict[str, Dict[str, float]]] = field(default_factory=list)
+    pid_terms: List[Dict[str, Dict[str, float]]] = field(default_factory=list)
     
     # LQR Controller data
-    lqr_cost_matrices: Optional[Dict[str, List[List[float]]]] = None  # Q, R matrices
-    lqr_gain_matrix: Optional[List[List[float]]] = None               # K matrix
-    lqr_instantaneous_costs: List[float] = None                       # x^T Q x + u^T R u
+    lqr_cost_matrices: Optional[Dict[str, List[List[float]]]] = field(default_factory=dict)
+    lqr_gain_matrix: Optional[List[List[float]]] = field(default_factory=list)
+    lqr_instantaneous_costs: List[float] = field(default_factory=list)
     
     # RL Controller data
-    rl_rewards: List[float] = None                                    # Reward at each step
-    rl_actions: List[List[float]] = None                              # Actions taken
-    rl_states: List[List[float]] = None                               # States observed
-    rl_next_states: List[List[float]] = None                          # Next states
-    rl_policy_probabilities: List[List[float]] = None                 # Action probabilities
-    rl_value_estimates: List[float] = None                            # Value function estimates
-    rl_advantage_estimates: List[float] = None                        # Advantage estimates
-    rl_training_losses: List[Dict[str, float]] = None                 # Policy, value, entropy losses
+    rl_rewards: List[float] = field(default_factory=list)
+    rl_actions: List[List[float]] = field(default_factory=list)
+    rl_states: List[List[float]] = field(default_factory=list)
+    rl_next_states: List[List[float]] = field(default_factory=list)
+    rl_policy_probabilities: List[List[float]] = field(default_factory=list)
+    rl_value_estimates: List[float] = field(default_factory=list)
+    rl_advantage_estimates: List[float] = field(default_factory=list)
+    rl_training_losses: List[Dict[str, float]] = field(default_factory=list)
     
-    def __post_init__(self):
-        # Initialize all lists
-        if self.times is None:
-            self.times = []
-        if self.positions is None:
-            self.positions = []
-        if self.orientations is None:
-            self.orientations = []
-        if self.velocities is None:
-            self.velocities = []
-        if self.angular_rates is None:
-            self.angular_rates = []
-        if self.ref_positions is None:
-            self.ref_positions = []
-        if self.ref_orientations is None:
-            self.ref_orientations = []
-        if self.position_errors is None:
-            self.position_errors = []
-        if self.orientation_errors is None:
-            self.orientation_errors = []
-        if self.thrusts is None:
-            self.thrusts = []
-        if self.torques is None:
-            self.torques = []
-        if self.motor_speeds is None:
-            self.motor_speeds = []
-        if self.disturbances is None:
-            self.disturbances = []
-        if self.pid_gains is None:
-            self.pid_gains = []
-        if self.pid_terms is None:
-            self.pid_terms = []
-        if self.lqr_instantaneous_costs is None:
-            self.lqr_instantaneous_costs = []
-        if self.rl_rewards is None:
-            self.rl_rewards = []
-        if self.rl_actions is None:
-            self.rl_actions = []
-        if self.rl_states is None:
-            self.rl_states = []
-        if self.rl_next_states is None:
-            self.rl_next_states = []
-        if self.rl_policy_probabilities is None:
-            self.rl_policy_probabilities = []
-        if self.rl_value_estimates is None:
-            self.rl_value_estimates = []
-        if self.rl_advantage_estimates is None:
-            self.rl_advantage_estimates = []
-        if self.rl_training_losses is None:
-            self.rl_training_losses = []
+    def __post_init__(self) -> None:
         if not self.timestamp:
             self.timestamp = datetime.now().isoformat()
     
@@ -289,9 +235,9 @@ class AcademicLog:
                   torques: Optional[np.ndarray] = None,
                   motor_speeds: Optional[np.ndarray] = None,
                   reward: Optional[float] = None,
-                  pid_data: Optional[Dict] = None,
-                  lqr_data: Optional[Dict] = None,
-                  rl_data: Optional[Dict] = None):
+                  pid_data: Optional[Dict[str, Any]] = None,
+                  lqr_data: Optional[Dict[str, Any]] = None,
+                  rl_data: Optional[Dict[str, Any]] = None) -> None:
         """Add a comprehensive time step entry to the log."""
         self.times.append(time)
         
@@ -388,13 +334,13 @@ class AcademicLog:
             self.rl_advantage_estimates.append(0.0)
             self.rl_training_losses.append({'policy': 0.0, 'value': 0.0, 'entropy': 0.0})
     
-    def save_json(self, filepath: str):
+    def save_json(self, filepath: str) -> None:
         """Save log to JSON format."""
         data = asdict(self)
         with open(filepath, 'w') as f:
             json.dump(data, f, indent=2)
     
-    def save_csv(self, filepath: str):
+    def save_csv(self, filepath: str) -> None:
         """Save log to CSV format for analysis."""
         with open(filepath, 'w', newline='') as f:
             writer = csv.writer(f)
@@ -491,7 +437,7 @@ class AcademicLog:
                     
                 writer.writerow(row)
     
-    def save_matlab(self, filepath: str):
+    def save_matlab(self, filepath: str) -> None:
         """Save log to MATLAB .mat format."""
         try:
             from scipy.io import savemat
@@ -659,7 +605,7 @@ class AcademicLog:
 def simulate_with_academic_logging(
     duration: float,
     dt: float,
-    controller: BaseController,
+    controller: BaseController | Callable[[float, QuadState], NDArray[np.float64]],
     initial_state: QuadState | None = None,
     params: Params = Params(),
     ref_position: Optional[np.ndarray] = None,
