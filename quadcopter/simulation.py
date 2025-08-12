@@ -21,7 +21,7 @@ Example
 """
 
 from dataclasses import dataclass
-from typing import Callable, Tuple
+from typing import Callable, Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -69,7 +69,7 @@ from numpy.typing import NDArray
 def simulate(
     duration: float,
     dt: float,
-    controller: BaseController,
+    controller: BaseController | Callable[[float, QuadState], NDArray[np.float64]],
     initial_state: QuadState | None = None,
     params: Params = Params(),
     *,
@@ -113,7 +113,7 @@ def simulate(
             def update(self, t: float, state: QuadState) -> NDArray[np.float64]:
                 return self._fn(t, state)
 
-        controller = _FnController(controller)  # now typed as BaseController
+        controller = _FnController(cast(_CallableController, controller))  # now typed as BaseController
 
     # -----------------------------------------------------------------
     # 1.  RHS wrapper: dynamics + controller

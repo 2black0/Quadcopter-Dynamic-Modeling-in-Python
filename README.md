@@ -28,13 +28,13 @@ pip install quadcopter-sim
 # Development install with all optional dependencies
 git clone https://github.com/2black0/quadcopter-sim-python
 cd quadcopter-sim-python
-pip install -e .[all]      # includes RL, control, and data analysis dependencies
+pip install -e .[all]      # includes all optional dependencies for development
 
 # Install specific optional dependencies
 pip install -e .[rl]       # Gymnasium for RL
 pip install -e .[control]  # SciPy for advanced control
 pip install -e .[data]     # SciPy for data export
-pip install -e .[dev]      # Development tools
+pip install -e .[dev]      # Core development tools (testing, linting)
 ```
 
 ---

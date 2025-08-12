@@ -13,8 +13,9 @@ Classes:
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, cast
 import numpy as np
+from numpy.typing import NDArray
 from scipy.linalg import solve_continuous_are
 from .dynamics import QuadState, Params
 from .simulation import BaseController
@@ -111,7 +112,7 @@ class PositionController(BaseController):
     # Target position
     target_pos: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 0.0]))
     
-    def update(self, t: float, state: QuadState) -> np.ndarray:
+    def update(self, t: float, state: QuadState) -> NDArray[np.float64]:
         """Calculate motor speeds to reach target position."""
         # Calculate position errors
         pos_error = self.target_pos - state.pos
@@ -137,7 +138,7 @@ class PositionController(BaseController):
         
         # Add x,y control as differential thrust (simplified)
         # This is a very simplified model - real implementation would be more complex
-        motor_speeds = np.full(4, motor_speed_base)
+        motor_speeds: NDArray[np.float64] = np.full(4, motor_speed_base)
         motor_speeds[0] += x_thrust * 0.1  # Front motors
         motor_speeds[1] -= x_thrust * 0.1  # Back motors
         motor_speeds[2] -= y_thrust * 0.1  # Left motors
@@ -172,7 +173,7 @@ class LQRController(BaseController):
     # Feedback gain matrix
     K: np.ndarray = field(init=False)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Compute the LQR gain matrix."""
         try:
             # Solve the algebraic Riccati equation
@@ -183,7 +184,7 @@ class LQRController(BaseController):
             # If the matrices are not suitable, use a simple proportional controller
             self.K = np.zeros((4, 12))
     
-    def update(self, t: float, state: QuadState) -> np.ndarray:
+    def update(self, t: float, state: QuadState) -> NDArray[np.float64]:
         """Calculate control input using LQR."""
         # Linearize around hover point (simplified)
         # Extract relevant states (position, velocity, orientation, angular velocity)
@@ -199,9 +200,10 @@ class LQRController(BaseController):
         x_ref = np.zeros(12)
         
         # Compute control input
+        u: NDArray[np.float64]
         try:
             u = -self.K @ (x - x_ref)
-        except:
+        except Exception:
             # If LQR fails, use simple proportional control
             u = -0.1 * (x - x_ref)[:4]  # Only use position errors
         
@@ -228,7 +230,7 @@ class AttitudeController(BaseController):
     # Target attitude (roll, pitch, yaw)
     target_attitude: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 0.0]))
     
-    def update(self, t: float, state: QuadState) -> np.ndarray:
+    def update(self, t: float, state: QuadState) -> NDArray[np.float64]:
         """Calculate motor speeds to reach target attitude."""
         # Convert quaternion to Euler angles (simplified)
         # This is a simplified conversion - a full implementation would be more robust
@@ -253,7 +255,7 @@ class AttitudeController(BaseController):
         # Ensure motor speeds are positive
         motor_speeds = np.maximum(motor_speeds, 0.0)
         
-        return motor_speeds
+        return cast(NDArray[np.float64], motor_speeds)
     
     def reset(self) -> None:
         """Reset all PID controllers."""
@@ -270,7 +272,7 @@ class FuzzyLogicController(BaseController):
     A full implementation would require a fuzzy logic library like scikit-fuzzy.
     """
     
-    def update(self, t: float, state: QuadState) -> np.ndarray:
+    def update(self, t: float, state: QuadState) -> NDArray[np.float64]:
         """Calculate motor speeds using fuzzy logic control."""
         # Placeholder implementation
         # A real implementation would:

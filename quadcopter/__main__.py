@@ -33,16 +33,6 @@ from .utils import create_pid_position_controller, create_lqr_controller, create
 # Controller implementations
 # ----------------------------------------------------------------------
 
-class _HoverController(BaseController):
-    """Return a fixed motor speed that balances weight at t=0."""
-
-    def __init__(self, omega_hover: float) -> None:
-        self._cmd: NDArray[np.float64] = np.full(4, omega_hover, dtype=np.float64)
-
-    def update(self, t: float, state: QuadState) -> NDArray[np.float64]:  # noqa: D401
-        return self._cmd
-
-
 def _create_pid_controller(args: argparse.Namespace, params: Params) -> BaseController:
     """Create a PID controller based on CLI arguments."""
     if args.controller == "pid":

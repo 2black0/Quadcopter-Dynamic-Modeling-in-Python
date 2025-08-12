@@ -32,7 +32,7 @@ class Params:
     l: float = 0.25                      # arm length (CoM → rotor) [m]
     b: float = 3.25e-5                   # thrust constant [N·s²]
     d: float = 7.5e-7                    # drag (yaw) constant [N·m·s²]
-    I: NDArray = field(
+    I: NDArray[np.float64] = field(
         default_factory=lambda: np.diag([7.5e-3, 7.5e-3, 1.3e-2])
     )  # inertia matrix [kg·m²]
 
